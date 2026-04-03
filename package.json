@@ -1,0 +1,14 @@
+{
+  "name": "command-centre",
+  "version": "1.0.0",
+  "description": "Personal project dashboard",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "setup-python": "cd backend && python3 -m venv venv && venv/bin/pip install -r requirements.txt",
+    "dev": "electron . --dev"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}

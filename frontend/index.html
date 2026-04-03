@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Command Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="titlebar-drag"></div>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="wordmark">CC</div>
+      <div class="sidebar-date" id="sidebar-date"></div>
+    </div>
+
+    <nav class="app-launcher">
+      <div class="launcher-label">Apps</div>
+      <button class="app-btn" data-app="Obsidian">
+        <span class="app-dot" style="background:#7F77DD"></span>Obsidian
+      </button>
+      <button class="app-btn" data-url="https://claude.ai">
+        <span class="app-dot" style="background:#D85A30"></span>Claude
+      </button>
+      <button class="app-btn" data-app="Google Chrome">
+        <span class="app-dot" style="background:#4285F4"></span>Chrome
+      </button>
+      <button class="app-btn" data-app="Outlook (PWA)">
+        <span class="app-dot" style="background:#0078D4"></span>Outlook
+      </button>
+      <button class="app-btn" data-app="Gmail">
+        <span class="app-dot" style="background:#EA4335"></span>Gmail
+      </button>
+      <button class="app-btn" data-app="Google Drive">
+        <span class="app-dot" style="background:#1D9E75"></span>Google Drive
+      </button>
+    </nav>
+
+    <div class="sidebar-stats" id="sidebar-stats">
+      <div class="stat-row"><span class="stat-n" id="s-total">—</span><span class="stat-l">projects</span></div>
+      <div class="stat-row"><span class="stat-n active-col" id="s-active">—</span><span class="stat-l">active</span></div>
+      <div class="stat-row"><span class="stat-n waiting-col" id="s-waiting">—</span><span class="stat-l">waiting</span></div>
+      <div class="stat-row"><span class="stat-n paused-col" id="s-paused">—</span><span class="stat-l">paused</span></div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <button class="new-btn" id="new-project-btn">+ New project</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <header class="topbar">
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="tab active" data-filter="all">All</button>
+        <button class="tab" data-filter="active">Active</button>
+        <button class="tab" data-filter="waiting">Waiting</button>
+        <button class="tab" data-filter="paused">Paused</button>
+        <button class="tab" data-filter="complete">Complete</button>
+      </div>
+      <div class="topbar-right">
+        <span class="last-updated" id="last-updated"></span>
+        <button class="refresh-btn" id="refresh-btn" title="Refresh">↻</button>
+      </div>
+    </header>
+
+    <div class="cards-grid" id="cards-grid">
+      <div class="loading-state">Loading projects…</div>
+    </div>
+  </main>
+
+</div>
+
+<!-- New project modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-title">New project</div>
+    <div class="modal-body">
+      <label class="field-label">Project name</label>
+      <input type="text" id="new-title" placeholder="e.g. EQAO Annual Report" autocomplete="off" />
+      <label class="field-label" style="margin-top:14px;">Due date <span style="color:var(--text-3);font-weight:400;">(optional)</span></label>
+      <input type="date" id="new-due" />
+      <p class="modal-hint">A note will be created in your Projects folder and opened in Obsidian. Fill in the details there.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modal-cancel">Cancel</button>
+      <button class="modal-confirm" id="modal-confirm">Create &amp; open in Obsidian</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
