@@ -32,10 +32,99 @@ function dueDateLabel(days) {
   return { text: `${days}d left`, cls: "due-ok" };
 }
 
+function formatElapsed(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 /* ── State ───────────────────────────────────────────────────────────── */
 
 let allProjects = [];
 let activeFilter = "all";
+let activeTimer = null;        // { project_id, start_time, ... } or null
+let timerInterval = null;      // setInterval handle for ticking display
+
+/* ── Timer logic ─────────────────────────────────────────────────────── */
+
+async function loadActiveTimer() {
+  try {
+    if (!window.cc) return;
+    const data = await window.cc.getActiveTimer();
+    if (data.active && data.entry) {
+      activeTimer = data.entry;
+      startTickingDisplay();
+    } else {
+      activeTimer = null;
+      stopTickingDisplay();
+    }
+  } catch (e) {
+    console.error("Failed to load active timer:", e);
+  }
+}
+
+function startTickingDisplay() {
+  stopTickingDisplay();
+  updateTimerDisplays();
+  timerInterval = setInterval(updateTimerDisplays, 1000);
+}
+
+function stopTickingDisplay() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function updateTimerDisplays() {
+  // Update the active card's timer display
+  $$(".timer-btn").forEach((btn) => {
+    const cardId = btn.dataset.projectId;
+    const elapsed = btn.querySelector(".timer-elapsed");
+    const label = btn.querySelector(".timer-label");
+
+    if (activeTimer && activeTimer.project_id === cardId) {
+      const startTime = new Date(activeTimer.start_time).getTime();
+      const now = Date.now();
+      const secs = Math.floor((now - startTime) / 1000);
+      btn.classList.add("running");
+      if (elapsed) elapsed.textContent = formatElapsed(secs);
+      if (label) label.textContent = "Stop";
+    } else {
+      btn.classList.remove("running");
+      if (elapsed) elapsed.textContent = "";
+      if (label) label.textContent = "Start timer";
+    }
+  });
+}
+
+async function handleTimerClick(project) {
+  if (!window.cc) return;
+
+  if (activeTimer && activeTimer.project_id === project.id) {
+    // Stop timer
+    await window.cc.stopTimer();
+    activeTimer = null;
+    stopTickingDisplay();
+    updateTimerDisplays();
+  } else {
+    // Start timer (auto-stops any running one on backend)
+    const result = await window.cc.startTimer(
+      project.id,
+      project.title,
+      project.client || "",
+      project.next_action || ""
+    );
+    if (result.ok) {
+      activeTimer = {
+        project_id: project.id,
+        start_time: result.started_at,
+      };
+      startTickingDisplay();
+    }
+  }
+}
 
 /* ── Render ──────────────────────────────────────────────────────────── */
 
@@ -69,6 +158,22 @@ function renderCard(p) {
     })
     .join("");
 
+  const isRunning = activeTimer && activeTimer.project_id === p.id;
+  const timerBtnClass = isRunning ? "timer-btn running" : "timer-btn";
+  let elapsedText = "";
+  if (isRunning) {
+    const startTime = new Date(activeTimer.start_time).getTime();
+    const secs = Math.floor((Date.now() - startTime) / 1000);
+    elapsedText = formatElapsed(secs);
+  }
+
+  const timerButton = `
+    <button class="${timerBtnClass}" data-project-id="${p.id}">
+      <span class="timer-icon">${isRunning ? "◼" : "▶"}</span>
+      <span class="timer-label">${isRunning ? "Stop" : "Start timer"}</span>
+      <span class="timer-elapsed">${elapsedText}</span>
+    </button>`;
+
   return `
     <div class="card" data-status="${p.status}">
       <div class="card-head">
@@ -98,7 +203,11 @@ function renderCard(p) {
       </div>
 
       ${dueBlock}
-      ${links ? `<div class="links-row">${links}</div>` : ""}
+
+      <div class="card-footer">
+        ${links ? `<div class="links-row">${links}</div>` : ""}
+        ${timerButton}
+      </div>
     </div>
   `;
 }
@@ -128,6 +237,15 @@ function renderGrid(projects) {
       } else {
         window.open(url, "_blank");
       }
+    });
+  });
+
+  // Wire up timer buttons
+  grid.querySelectorAll(".timer-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const projectId = btn.dataset.projectId;
+      const project = allProjects.find((p) => p.id === projectId);
+      if (project) handleTimerClick(project);
     });
   });
 }
@@ -293,8 +411,118 @@ const MOCK_PROJECTS = [
   },
 ];
 
+/* ── View switching ─────────────────────────────────────────────────── */
+
+document.querySelectorAll(".nav-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const view = btn.dataset.view;
+    $("#view-projects").classList.toggle("hidden", view !== "projects");
+    $("#view-reports").classList.toggle("hidden", view !== "reports");
+
+    if (view === "reports") loadReports();
+  });
+});
+
+/* ── Reports ──────────────────────────────────────────────────────────── */
+
+function renderBarChart(container, data, labelKey, valueKey) {
+  const maxVal = Math.max(...data.map((d) => d[valueKey]), 1);
+  container.innerHTML = data
+    .map((d) => {
+      const pct = (d[valueKey] / maxVal) * 100;
+      const label = d[labelKey] || "(none)";
+      return `
+        <div class="bar-row">
+          <span class="bar-label" title="${label}">${label}</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%"></div>
+          </div>
+          <span class="bar-value">${d[valueKey]}h</span>
+        </div>`;
+    })
+    .join("");
+}
+
+function formatMonthLabel(ym) {
+  // "2025-07" → "Jul 2025"
+  const [y, m] = ym.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${months[parseInt(m, 10) - 1]} ${y}`;
+}
+
+function renderReportTable(entries) {
+  const tbody = $("#report-table-body");
+  tbody.innerHTML = entries
+    .map((e) => {
+      const dt = e.start_time ? e.start_time.slice(0, 10) : "";
+      const hours = e.duration_secs ? (e.duration_secs / 3600).toFixed(1) : "0";
+      const srcClass = e.source === "timer" ? "source-timer" : "source-import";
+      return `
+        <tr>
+          <td>${dt}</td>
+          <td>${e.project_title || ""}</td>
+          <td>${e.client || ""}</td>
+          <td>${e.task || ""}</td>
+          <td class="col-hours">${hours}</td>
+          <td><span class="source-badge ${srcClass}">${e.source || ""}</span></td>
+        </tr>`;
+    })
+    .join("");
+}
+
+async function loadReports() {
+  try {
+    const res = await fetch("http://localhost:7842/timer/summary");
+    const data = await res.json();
+
+    // Summary cards
+    $("#r-total-hours").textContent = data.total_hours;
+    $("#r-month-hours").textContent = data.month_hours;
+    $("#r-week-hours").textContent = data.week_hours;
+    $("#r-total-entries").textContent = data.total_entries;
+
+    // Bar charts
+    renderBarChart($("#chart-by-category"), data.by_category, "category", "hours");
+    renderBarChart($("#chart-by-client"), data.by_client, "client", "hours");
+
+    // Hide client panel if no client data
+    const clientPanel = $("#client-panel");
+    if (data.by_client.length === 0) {
+      clientPanel.style.display = "none";
+    } else {
+      clientPanel.style.display = "";
+    }
+
+    const monthData = data.by_month.map((d) => ({
+      ...d,
+      label: formatMonthLabel(d.month),
+    }));
+    renderBarChart($("#chart-by-month"), monthData, "label", "hours");
+
+    // Table
+    renderReportTable(data.recent);
+  } catch (e) {
+    console.error("Failed to load reports:", e);
+  }
+}
+
+/* ── CSV export ───────────────────────────────────────────────────────── */
+
+$("#export-csv-btn").addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.href = "http://localhost:7842/timer/export";
+  link.download = "time_report.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
 /* ── Init ─────────────────────────────────────────────────────────────── */
 
 updateDate();
 loadProjects();
+loadActiveTimer();
 setInterval(loadProjects, 30000); // Refresh every 30 seconds

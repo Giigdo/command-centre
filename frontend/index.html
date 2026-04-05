@@ -21,6 +21,15 @@
       <div class="sidebar-date" id="sidebar-date"></div>
     </div>
 
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-view="projects">
+        <span class="nav-icon">◻</span>Projects
+      </button>
+      <button class="nav-btn" data-view="reports">
+        <span class="nav-icon">◷</span>Reports
+      </button>
+    </nav>
+
     <nav class="app-launcher">
       <div class="launcher-label">Apps</div>
       <button class="app-btn" data-app="Obsidian">
@@ -55,8 +64,8 @@
     </div>
   </aside>
 
-  <!-- Main content -->
-  <main class="main">
+  <!-- Main content: Projects view -->
+  <main class="main" id="view-projects">
     <header class="topbar">
       <div class="filter-tabs" id="filter-tabs">
         <button class="tab active" data-filter="all">All</button>
@@ -73,6 +82,78 @@
 
     <div class="cards-grid" id="cards-grid">
       <div class="loading-state">Loading projects…</div>
+    </div>
+  </main>
+
+  <!-- Main content: Reports view -->
+  <main class="main hidden" id="view-reports">
+    <header class="topbar">
+      <div class="report-title">Time Reports</div>
+      <div class="topbar-right">
+        <button class="export-btn" id="export-csv-btn">↓ Export CSV</button>
+      </div>
+    </header>
+
+    <div class="report-content" id="report-content">
+
+      <!-- Summary row -->
+      <div class="report-summary" id="report-summary">
+        <div class="summary-card">
+          <div class="summary-value" id="r-total-hours">—</div>
+          <div class="summary-label">total hours</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="r-month-hours">—</div>
+          <div class="summary-label">this month</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="r-week-hours">—</div>
+          <div class="summary-label">this week</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value" id="r-total-entries">—</div>
+          <div class="summary-label">entries</div>
+        </div>
+      </div>
+
+      <!-- Two-column: by client + by month -->
+      <div class="report-charts">
+        <div class="report-panel">
+          <div class="panel-title">Hours by category</div>
+          <div class="chart-bars" id="chart-by-category"></div>
+        </div>
+        <div class="report-panel">
+          <div class="panel-title">Hours by month</div>
+          <div class="chart-bars" id="chart-by-month"></div>
+        </div>
+      </div>
+
+      <!-- Client breakdown -->
+      <div class="report-panel" id="client-panel" style="margin-bottom:20px;">
+        <div class="panel-title">Hours by client</div>
+        <div class="chart-bars" id="chart-by-client"></div>
+      </div>
+
+      <!-- Recent entries table -->
+      <div class="report-panel report-table-panel">
+        <div class="panel-title">Recent entries</div>
+        <div class="report-table-wrap">
+          <table class="report-table" id="report-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Client</th>
+                <th>Description</th>
+                <th>Hours</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </main>
 
