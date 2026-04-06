@@ -459,7 +459,7 @@ function renderReportTable(entries) {
     .map((e) => {
       const dt = e.start_time ? e.start_time.slice(0, 10) : "";
       const hours = e.duration_secs ? (e.duration_secs / 3600).toFixed(1) : "0";
-      const srcClass = e.source === "timer" ? "source-timer" : "source-import";
+      const srcClass = e.source === "timer" ? "source-timer" : e.source === "manual" ? "source-manual" : "source-import";
       return `
         <tr>
           <td>${dt}</td>
@@ -486,6 +486,10 @@ async function loadReports() {
 
     // Bar charts
     renderBarChart($("#chart-by-category"), data.by_category, "category", "hours");
+
+    // Update known categories for the manual entry autocomplete
+    knownCategories = data.by_category.map((d) => d.category).filter(Boolean);
+
     renderBarChart($("#chart-by-client"), data.by_client, "client", "hours");
 
     // Hide client panel if no client data
@@ -508,6 +512,87 @@ async function loadReports() {
     console.error("Failed to load reports:", e);
   }
 }
+
+/* ── Manual entry modal ───────────────────────────────────────────── */
+
+const entryBackdrop = $("#entry-modal-backdrop");
+const entryCategory = $("#entry-category");
+const entryClient = $("#entry-client");
+const entryDescription = $("#entry-description");
+const entryDate = $("#entry-date");
+const entryHours = $("#entry-hours");
+const entryConfirmBtn = $("#entry-modal-confirm");
+
+let knownCategories = [];
+
+$("#add-entry-btn").addEventListener("click", () => {
+  // Set date to today
+  entryDate.value = new Date().toISOString().slice(0, 10);
+  entryCategory.value = "";
+  entryClient.value = "";
+  entryDescription.value = "";
+  entryHours.value = "";
+
+  // Populate category datalist from known categories
+  const datalist = $("#category-list");
+  datalist.innerHTML = knownCategories
+    .map((c) => `<option value="${c}">`)
+    .join("");
+
+  entryBackdrop.classList.add("open");
+  setTimeout(() => entryCategory.focus(), 50);
+});
+
+$("#entry-modal-cancel").addEventListener("click", () => {
+  entryBackdrop.classList.remove("open");
+});
+
+entryBackdrop.addEventListener("click", (e) => {
+  if (e.target === entryBackdrop) entryBackdrop.classList.remove("open");
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && entryBackdrop.classList.contains("open")) {
+    entryBackdrop.classList.remove("open");
+  }
+});
+
+entryConfirmBtn.addEventListener("click", async () => {
+  const category = entryCategory.value.trim();
+  const client = entryClient.value.trim();
+  const description = entryDescription.value.trim();
+  const dateVal = entryDate.value;
+  const hours = entryHours.value;
+
+  if (!category) { entryCategory.focus(); return; }
+  if (!dateVal) { entryDate.focus(); return; }
+  if (!hours || parseFloat(hours) <= 0) { entryHours.focus(); return; }
+
+  entryConfirmBtn.disabled = true;
+  entryConfirmBtn.textContent = "Adding…";
+
+  try {
+    const res = await fetch("http://localhost:7842/timer/manual", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category, client, description, date: dateVal, hours: parseFloat(hours) }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+    } else {
+      entryBackdrop.classList.remove("open");
+      loadReports(); // Refresh the reports view
+    }
+  } catch (err) {
+    console.error("Failed to add manual entry:", err);
+    alert("Failed to add entry. Is the backend running?");
+  }
+
+  entryConfirmBtn.disabled = false;
+  entryConfirmBtn.textContent = "Add entry";
+});
 
 /* ── CSV export ───────────────────────────────────────────────────────── */
 

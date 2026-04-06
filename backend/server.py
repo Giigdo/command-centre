@@ -376,6 +376,50 @@ def timer_log():
     return jsonify({"entries": [dict(r) for r in rows]})
 
 
+@app.route("/timer/manual", methods=["POST"])
+def timer_manual():
+    """Add a manual time entry (for meetings, pickups, etc.)"""
+    data = request.get_json()
+    category = (data.get("category") or "").strip()
+    client = (data.get("client") or "").strip()
+    description = (data.get("description") or "").strip()
+    entry_date = (data.get("date") or "").strip()
+    hours = data.get("hours")
+
+    if not category:
+        return jsonify({"error": "Category is required"}), 400
+    if not entry_date:
+        return jsonify({"error": "Date is required"}), 400
+    if hours is None or hours == "":
+        return jsonify({"error": "Hours is required"}), 400
+
+    try:
+        hours = float(hours)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Hours must be a number"}), 400
+
+    if hours <= 0:
+        return jsonify({"error": "Hours must be greater than 0"}), 400
+
+    project_id = category.lower().replace(" ", "-")
+    start_time = f"{entry_date}T09:00:00"
+    duration_secs = hours * 3600
+    end_dt = datetime.fromisoformat(start_time) + __import__('datetime').timedelta(seconds=duration_secs)
+    end_time = end_dt.isoformat()
+
+    conn = get_db()
+    conn.execute(
+        """INSERT INTO time_entries
+           (project_id, project_title, client, task, start_time, end_time, duration_secs, source)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'manual')""",
+        (project_id, category, client, description, start_time, end_time, duration_secs)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
 @app.route("/timer/summary")
 def timer_summary():
     """Aggregated time data for the reports view."""

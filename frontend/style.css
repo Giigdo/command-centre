@@ -870,3 +870,41 @@ body {
 
 .source-timer  { background: var(--active-bg);  color: var(--active); }
 .source-import { background: var(--waiting-bg); color: var(--waiting); }
+.source-manual { background: var(--paused-bg);  color: var(--paused); }
+
+/* ── Add entry button ─────────────────────────────────────────────── */
+.add-entry-btn {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid var(--border-mid);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.add-entry-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+/* ── Modal shared input styles ───────────────────────────────────── */
+.modal-body input[type="date"],
+.modal-body input[type="number"] {
+  width: 100%;
+  padding: 9px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-1);
+  outline: none;
+  margin-top: 6px;
+}
+.modal-body input[type="date"]:focus,
+.modal-body input[type="number"]:focus {
+  border-color: var(--text-1);
+}
