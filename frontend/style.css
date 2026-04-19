@@ -24,6 +24,9 @@
   --complete:     #5F5E5A;
   --complete-bg:  #F1EFE8;
   --complete-bar: #888780;
+  --research:     #6B3FA0;
+  --research-bg:  #F0E8FB;
+  --research-bar: #8B5FC0;
 
   --sidebar-w:    200px;
   --radius:       10px;
@@ -46,6 +49,7 @@
     --waiting-bg:  #0a1e33;
     --paused-bg:   #2d1e05;
     --complete-bg: #242320;
+    --research-bg: #1e1430;
   }
 }
 
@@ -173,6 +177,7 @@ body {
 }
 
 .active-col  { color: var(--active); }
+.research-col { color: var(--research); }
 .waiting-col { color: var(--waiting); }
 .paused-col  { color: var(--paused); }
 
@@ -310,6 +315,7 @@ body {
 .card[data-status="waiting"]::before  { background: var(--waiting-bar); }
 .card[data-status="paused"]::before   { background: var(--paused-bar); }
 .card[data-status="complete"]::before { background: var(--complete-bar); }
+.card[data-status="research"]::before { background: var(--research-bar); }
 
 .card-head {
   display: flex;
@@ -347,6 +353,7 @@ body {
 .badge-waiting  { background: var(--waiting-bg);  color: var(--waiting); }
 .badge-paused   { background: var(--paused-bg);   color: var(--paused); }
 .badge-complete { background: var(--complete-bg); color: var(--complete); }
+.badge-research { background: var(--research-bg); color: var(--research); }
 
 .next-section {
   margin-bottom: 14px;

@@ -24,7 +24,7 @@ PROJECTS_PATH = VAULT_PATH / "Projects"
 _cache = {"projects": [], "last_updated": None}
 _cache_lock = threading.Lock()
 
-STATUS_ORDER = {"active": 0, "waiting": 1, "paused": 2, "complete": 3}
+STATUS_ORDER = {"active": 0, "research": 1, "waiting": 2, "paused": 3, "complete": 4}
 
 PROJECT_TEMPLATE = """---
 dashboard: true

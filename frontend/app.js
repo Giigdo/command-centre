@@ -254,6 +254,7 @@ function updateStats(projects) {
   const count = (s) => projects.filter((p) => p.status === s).length;
   $("#s-total").textContent   = projects.length;
   $("#s-active").textContent  = count("active");
+  $("#s-research").textContent = count("research");
   $("#s-waiting").textContent = count("waiting");
   $("#s-paused").textContent  = count("paused");
 }
