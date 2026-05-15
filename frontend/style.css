@@ -271,13 +271,18 @@ body {
 
 /* ── Cards grid ──────────────────────────────────────────────────────── */
 .cards-grid {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 4px 28px 28px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 420px));
+  grid-auto-rows: max-content;
+  align-items: start;
   gap: 12px;
   align-content: start;
+  justify-content: start;
 }
 
 .cards-grid::-webkit-scrollbar { width: 6px; }
@@ -572,10 +577,11 @@ body {
   justify-content: space-between;
   gap: 8px;
   margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 .card-footer .links-row {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
